@@ -24,7 +24,7 @@ public class TestTriggerController {
     private final EmailSendService emailSendService;
 
     @GetMapping
-    public ResponseEntity examCheck() throws IOException, InterruptedException, MessagingException {
+    public ResponseEntity examCheck() throws IOException, MessagingException {
         testCheckService.checkTestsFromEmail();
         testCheckService.runMvnTest();
         return ResponseEntity.status(HttpStatus.CREATED).body(new MessageResponse(emailSendService.sendSimpleMessage()));
