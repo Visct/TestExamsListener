@@ -38,24 +38,24 @@ public class TestCheckService {
 
 
     public void checkTestsFromEmail() throws IOException {
-        File attachment = new File("59a438f0-a94d-4be5-9268-8e6f1276699c.zip");        ////
+        File attachment = new File("771018b7-b7ae-4382-b3c1-aaa7a2829eb0.zip");        ////
         String emailStudenta = "kontoall2011@gmail.com";                                       ////   <- SYMULACJA DOSTARCZENIA DANYCH
-        Path operationFolder = Path.of("59a438f0-a94d-4be5-9268-8e6f1276699cOperation");  ////
+        Path operationFolder = Path.of("771018b7-b7ae-4382-b3c1-aaa7a2829eb0Operation");  ////
 
         //UTWORZENIE FOLDERU OPERACYJNEGO
         Files.createDirectories(operationFolder);
         //WYPAKOWANIE ZIPA OD STUDENTA DO FILDERU OPERACYJNEGO
         unzip(attachment.toPath().toString(), operationFolder.toString());
         //POBRANIE ZIPA Z TESTAMI PRZYGOTOWANYMI POD DANY TEST
-        S3Object s3object = amazonClient.getObject(awsProperties.getBucketNameOfTests(), "146f7d99-6dc5-4890-bbef-38a65d9cf8d4Tests.zip");
+        S3Object s3object = amazonClient.getObject(awsProperties.getBucketNameOfTests(), "771018b7-b7ae-4382-b3c1-aaa7a2829eb0Tests.zip");
         //ZAPISANIE ZIPA Z TESTAMI DO FOLDERU OPERACYJNEGO
         Files.copy(s3object.getObjectContent(), Path.of(operationFolder + File.separator + "test.zip"));
         //WYPAKOWANIE ZIPA Z TESTAMI DO FOLDERU OPERACYJNEGO
         unzip(operationFolder + File.separator + "test.zip", operationFolder.toString());
         //WRZUCENIE ZADAN DO PROJEKTU TESTEXAMLISTENER
-        FileUtils.copyDirectory(Path.of("59a438f0-a94d-4be5-9268-8e6f1276699cOperation/Tests").toFile(), Path.of("src/test/java").toFile());
+        FileUtils.copyDirectory(Path.of("771018b7-b7ae-4382-b3c1-aaa7a2829eb0Operation/Tests").toFile(), Path.of("src/test/java").toFile());
         //SKOPIOWANIE TESTOW DO PROJEKTU TESTEXAMLISTENER
-        FileUtils.copyDirectory(Path.of("59a438f0-a94d-4be5-9268-8e6f1276699cOperation/TestMavenProject/src/main/java/pl/kurs").toFile(), Path.of("src/main/java/pl/kurs").toFile());
+        FileUtils.copyDirectory(Path.of("771018b7-b7ae-4382-b3c1-aaa7a2829eb0Operation/Exam/src/main/java/pl/kurs").toFile(), Path.of("src/main/java/pl/kurs").toFile());
         s3object.close();
 
 
@@ -106,7 +106,7 @@ public class TestCheckService {
     }
 
     public Map<String, Integer> checkPoints(String name) {
-        Map<String, Integer> totalPoints = new LinkedHashMap<>();
+        Map<String, Integer> points = new LinkedHashMap<>();
         AtomicReference<String> testName = new AtomicReference<>();
         try (Stream<Path> paths = Files.walk(Paths.get("target/surefire-reports"))) {
             paths
@@ -132,7 +132,7 @@ public class TestCheckService {
                                     testName.set(word.substring(word.lastIndexOf(" ") + 1));
                                 }
                                 if (word.contains(name)) {
-                                    totalPoints.put(String.valueOf(testName), Integer.parseInt(word.substring(word.lastIndexOf(" ") + 1)));
+                                    points.put(String.valueOf(testName), Integer.parseInt(word.substring(word.lastIndexOf(" ") + 1)));
                                 }
                             }
                         }
@@ -147,7 +147,7 @@ public class TestCheckService {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        return totalPoints;
+        return points;
     }
 
 
