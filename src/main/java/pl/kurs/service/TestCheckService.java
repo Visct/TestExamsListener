@@ -36,17 +36,23 @@ public class TestCheckService {
 
 
     public void checkTestsFromEmail() throws IOException {
-        File attachment = new File("59a438f0-a94d-4be5-9268-8e6f1276699c.zip");
-        String emailStudenta = "kontoall2011@gmail.com";
-        Path operationFolder = Path.of("59a438f0-a94d-4be5-9268-8e6f1276699cOperation");
+        File attachment = new File("59a438f0-a94d-4be5-9268-8e6f1276699c.zip");        ////
+        String emailStudenta = "kontoall2011@gmail.com";                                       ////   <- SYMULACJA DOSTARCZENIA DANYCH
+        Path operationFolder = Path.of("59a438f0-a94d-4be5-9268-8e6f1276699cOperation");  ////
 
-
+        //UTWORZENIE FOLDERU OPERACYJNEGO
         Files.createDirectories(operationFolder);
+        //WYPAKOWANIE ZIPA OD STUDENTA DO FILDERU OPERACYJNEGO
         unzip(attachment.toPath().toString(), operationFolder.toString());
+        //POBRANIE ZIPA Z TESTAMI PRZYGOTOWANYMI POD DANY TEST
         S3Object s3object = amazonClient.getObject(awsProperties.getBucketNameOfTests(), "146f7d99-6dc5-4890-bbef-38a65d9cf8d4Tests.zip");
+        //ZAPISANIE ZIPA Z TESTAMI DO FOLDERU OPERACYJNEGO
         Files.copy(s3object.getObjectContent(), Path.of(operationFolder + File.separator + "test.zip"));
+        //WYPAKOWANIE ZIPA Z TESTAMI DO FOLDERU OPERACYJNEGO
         unzip(operationFolder + File.separator + "test.zip", operationFolder.toString());
+        //WRZUCENIE ZADAN DO PROJEKTU TESTEXAMLISTENER
         FileUtils.copyDirectory(Path.of("59a438f0-a94d-4be5-9268-8e6f1276699cOperation/Tests").toFile(), Path.of("src/test/java").toFile());
+        //SKOPIOWANIE TESTOW DO PROJEKTU TESTEXAMLISTENER
         FileUtils.copyDirectory(Path.of("59a438f0-a94d-4be5-9268-8e6f1276699cOperation/TestMavenProject/src/main/java/pl/kurs").toFile(), Path.of("src/main/java/pl/kurs").toFile());
         s3object.close();
 
