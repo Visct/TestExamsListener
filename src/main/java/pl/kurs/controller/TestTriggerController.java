@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import pl.kurs.service.EmailSendService;
 import pl.kurs.service.TestCheckService;
 
+import javax.mail.MessagingException;
 import java.io.IOException;
 
 @RestController
@@ -23,12 +24,10 @@ public class TestTriggerController {
     private final EmailSendService emailSendService;
 
     @GetMapping
-    public ResponseEntity examCheck() throws IOException, InterruptedException {
+    public ResponseEntity examCheck() throws IOException, InterruptedException, MessagingException {
         testCheckService.checkTestsFromEmail();
         testCheckService.runMvnTest();
-        double result = testCheckService.examResult();
-        testCheckService.cleanFolder();
-        return ResponseEntity.status(HttpStatus.CREATED).body(new MessageResponse(result));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new MessageResponse(emailSendService.sendSimpleMessage()));
     }
 
 
