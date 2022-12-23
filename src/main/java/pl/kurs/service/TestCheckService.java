@@ -21,7 +21,9 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -93,12 +95,19 @@ public class TestCheckService {
         bos.close();
     }
 
-    public double examResult() {
-        return ((maxPoints() - failurePoints()) * 100) / maxPoints();
+    public String examResult() {
+
+        Map<String, Integer> totalPoints = checkPoints("Tests run");
+        Map<String, Integer> failurePoints = checkPoints("Failures");
+        Map<String, Integer> pointsFromSpecificTask = totalPoints;
+
+        failurePoints.forEach((key, value) -> pointsFromSpecificTask.put(key, pointsFromSpecificTask.get(key) - value));
+        return pointsFromSpecificTask.toString();
     }
 
-    public int maxPoints() {
-        AtomicInteger maxPoints = new AtomicInteger();
+    public Map<String, Integer> checkPoints(String name) {
+        Map<String, Integer> totalPoints = new LinkedHashMap<>();
+        AtomicReference<String> testName = new AtomicReference<>();
         try (Stream<Path> paths = Files.walk(Paths.get("target/surefire-reports"))) {
             paths
                     .filter(file -> file.toString().endsWith("txt"))
@@ -119,8 +128,11 @@ public class TestCheckService {
                             }
                             String[] words = line.split(",");
                             for (String word : words) {
-                                if (word.contains("Tests run")) {
-                                    maxPoints.addAndGet(Integer.parseInt(word.substring(word.lastIndexOf(" ") + 1)));
+                                if (word.contains("Test set")) {
+                                    testName.set(word.substring(word.lastIndexOf(" ") + 1));
+                                }
+                                if (word.contains(name)) {
+                                    totalPoints.put(String.valueOf(testName), Integer.parseInt(word.substring(word.lastIndexOf(" ") + 1)));
                                 }
                             }
                         }
@@ -135,49 +147,9 @@ public class TestCheckService {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        return maxPoints.get();
+        return totalPoints;
     }
 
-    public int failurePoints() {
-        AtomicInteger failurePoints = new AtomicInteger();
-        try (Stream<Path> paths = Files.walk(Paths.get("target/surefire-reports"))) {
-            paths
-                    .filter(file -> file.toString().endsWith("txt"))
-                    .forEach(f -> {
-                        BufferedReader br = null;
-                        try {
-                            br = new BufferedReader(new FileReader(f.toFile()));
-                        } catch (FileNotFoundException e) {
-                            throw new RuntimeException(e);
-                        }
-
-                        String line;
-                        while (true) {
-                            try {
-                                if ((line = br.readLine()) == null) break;
-                            } catch (IOException e) {
-                                throw new RuntimeException(e);
-                            }
-                            String[] words = line.split(",");
-                            for (String word : words) {
-                                if (word.contains("Failures")) {
-                                    failurePoints.addAndGet(Integer.parseInt(word.substring(word.lastIndexOf(" ") + 1)));
-                                }
-                            }
-                        }
-
-                        try {
-                            br.close();
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-
-                    });
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return failurePoints.get();
-    }
 
     public void runMvnTest() throws IOException {
         Process p = Runtime.getRuntime().exec("cmd /c mvn test");
@@ -201,7 +173,6 @@ public class TestCheckService {
         if (folder.exists()) {
             // Get the list of files in the folder
             File[] files = folder.listFiles();
-
             // Loop through the files and delete them
             for (File file : files) {
                 file.delete();
