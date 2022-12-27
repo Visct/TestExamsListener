@@ -1,4 +1,4 @@
-package pl.kurs.controller;
+package pl.logic.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -7,8 +7,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import pl.kurs.service.EmailSendService;
-import pl.kurs.service.TestCheckService;
+import pl.logic.service.OperationService;
 
 import javax.mail.MessagingException;
 import java.io.IOException;
@@ -20,14 +19,11 @@ import java.io.IOException;
 
 public class TestTriggerController {
 
-    private final TestCheckService testCheckService;
-    private final EmailSendService emailSendService;
+    private final OperationService operationService;
 
     @GetMapping
     public ResponseEntity examCheck() throws IOException, MessagingException {
-        testCheckService.checkTestsFromEmail();
-        testCheckService.runMvnTest();
-        return ResponseEntity.status(HttpStatus.CREATED).body(new MessageResponse(emailSendService.sendSimpleMessage()));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new MessageResponse(operationService.checkReceivedExam()));
     }
 
 

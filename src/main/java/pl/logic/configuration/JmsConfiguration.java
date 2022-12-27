@@ -1,4 +1,4 @@
-package pl.kurs.configuration;
+package pl.logic.configuration;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 import org.springframework.beans.factory.annotation.Value;

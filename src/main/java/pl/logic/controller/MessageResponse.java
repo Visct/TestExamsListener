@@ -1,4 +1,4 @@
-package pl.kurs.controller;
+package pl.logic.controller;
 
 import lombok.Value;
 

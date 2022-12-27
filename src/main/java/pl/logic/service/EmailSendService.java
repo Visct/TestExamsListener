@@ -1,4 +1,4 @@
-package pl.kurs.service;
+package pl.logic.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -12,21 +12,19 @@ import javax.mail.internet.MimeMessage;
 @RequiredArgsConstructor
 public class EmailSendService {
 
-    private final TestCheckService testCheckService;
 
     private final JavaMailSender javaMailSender;
 
-    public String sendSimpleMessage() throws MessagingException {
+    public void sendSimpleMessage(String examResult, String studentEmail) throws MessagingException {
         MimeMessage mimeMessage = javaMailSender.createMimeMessage();
 
         MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, true);
         mimeMessageHelper.setFrom("testcheckmaster@gmail.com");
-        mimeMessageHelper.setTo("kontoall2011@gmail.com");
+        mimeMessageHelper.setTo(studentEmail);
         mimeMessageHelper.setSubject("Wyniki testu");
-        String result = testCheckService.examResult();
-        mimeMessageHelper.setText(String.valueOf(result));
+        mimeMessageHelper.setText(examResult);
 
         javaMailSender.send(mimeMessage);
-        return result;
+
     }
 }

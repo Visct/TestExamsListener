@@ -1,4 +1,4 @@
-package pl.kurs.configuration.properties;
+package pl.logic.configuration.properties;
 
 import lombok.Getter;
 import lombok.Setter;

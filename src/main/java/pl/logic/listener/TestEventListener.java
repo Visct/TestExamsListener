@@ -1,4 +1,4 @@
-package pl.kurs.listener;
+package pl.logic.listener;
 
 public class TestEventListener {
 }

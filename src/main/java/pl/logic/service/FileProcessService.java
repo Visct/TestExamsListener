@@ -1,6 +1,7 @@
-package pl.kurs.service;
+package pl.logic.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
@@ -17,6 +18,7 @@ import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class FileProcessService {
 
     public Map<String, Integer> checkPoints(String name) {
@@ -44,7 +46,7 @@ public class FileProcessService {
                     }
             );
         } catch (Exception exc) {
-            //..
+            log.error("Error during processing file", exc);
         }
     }
 

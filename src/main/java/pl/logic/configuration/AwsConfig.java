@@ -1,4 +1,4 @@
-package pl.kurs.configuration;
+package pl.logic.configuration;
 
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;

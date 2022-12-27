@@ -1,15 +1,14 @@
-
-package pl.kurs.service;
-
+package pl.logic.service;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.S3Object;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import pl.kurs.configuration.properties.AwsProperties;
+import pl.logic.configuration.properties.AwsProperties;
 
+import javax.mail.MessagingException;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
@@ -19,19 +18,24 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 @Service
 @RequiredArgsConstructor
-public class TestCheckService {
+@Slf4j
 
+public class OperationService {
     private static final int BUFFER_SIZE = 4096;
     private final AmazonS3 amazonClient;
     private final AwsProperties awsProperties;
 
-    private final FileProcessService fileProcessService;
+    private final EmailSendService emailSendService;
+
+    private final TestCheckService testCheckService;
+
+
+
 
 
     public void checkTestsFromEmail() throws IOException {
@@ -55,10 +59,56 @@ public class TestCheckService {
         FileUtils.copyDirectory(Path.of("771018b7-b7ae-4382-b3c1-aaa7a2829eb0Operation/Exam/src/main/java/pl/kurs").toFile(), Path.of("src/main/java/pl/kurs").toFile());
         s3object.close();
 
+        runMvnTest();
+
 
     }
 
-    public void unzip(String zipFilePath, String destDirectory) throws IOException {
+    public String checkReceivedExam () throws IOException, MessagingException {
+        checkTestsFromEmail();
+        String examResult = testCheckService.examResult();
+        emailSendService.sendSimpleMessage(examResult, "kontoall2011@gmail.com");
+        cleanFolder("src/test/java");
+        cleanFolder("src/main/java/pl/exam");
+
+        return examResult;
+    }
+
+//    @Scheduled(cron = "")
+//    public void processEveryNight() {
+////Quartz
+//    }
+
+    private void runMvnTest() throws IOException {
+        Process p = Runtime.getRuntime().exec("cmd /c mvn test");
+        String s;
+        System.out.println(p.getOutputStream().toString());
+        BufferedReader stdInput = new BufferedReader(new
+                InputStreamReader(p.getInputStream()));
+        StringBuilder sb = new StringBuilder();
+        while ((s = stdInput.readLine()) != null) {
+            sb.append(s);
+        }
+        System.out.println(sb);
+    }
+
+    private void cleanFolder(String path) {
+        // Create a File object for the folder
+        File folder = new File(path);
+        // Check if the folder exists
+        if (folder.exists()) {
+            // Get the list of files in the folder
+            File[] files = folder.listFiles();
+            // Loop through the files and delete them
+            for (File file : files) {
+                file.delete();
+            }
+        }
+    }
+
+
+
+    private void unzip(String zipFilePath, String destDirectory) throws IOException {
         File destDir = new File(destDirectory);
         if (!destDir.exists()) {
             destDir.mkdir();
@@ -82,11 +132,6 @@ public class TestCheckService {
         }
     }
 
-//    @Scheduled(cron = "")
-//    public void processEveryNight() {
-////Quartz
-//    }
-
     private void extractFile(ZipInputStream zipIn, String filePath) throws IOException {
         try (BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(filePath))) {
             byte[] bytesIn = new byte[BUFFER_SIZE];
@@ -96,62 +141,4 @@ public class TestCheckService {
             }
         }
     }
-
-    public String examResult() {
-
-        Map<String, Integer> totalPoints = checkPoints("Tests run");
-        Map<String, Integer> failurePoints = checkPoints("Failures");
-        Map<String, Integer> pointsFromSpecificTask = totalPoints;
-        failurePoints.forEach((key, value) -> pointsFromSpecificTask.put(key, pointsFromSpecificTask.get(key) - value));
-
-        return examMessage(totalPoints, failurePoints, pointsFromSpecificTask);
-    }
-
-    public Map<String, Integer> checkPoints(String name) {
-        return fileProcessService.checkPoints(name);
-    }
-
-    public String examMessage(Map<String, Integer> totalPoints, Map<String, Integer> failurePoints, Map<String, Integer> pointsFromSpecificTask) {
-        int totalExamPoints = totalPoints.values().stream().reduce(0, Integer::sum);
-        int receivedExamPoints = totalExamPoints - failurePoints.values().stream().reduce(0, Integer::sum);
-
-        StringBuilder examResults = new StringBuilder();
-        examResults.append("Maksymalna liczba punktów do zdobycia: ").append(totalExamPoints).append('\n');
-        examResults.append("Liczba zdobytych punktów: ").append(receivedExamPoints).append('\n');
-        examResults.append("Otrzymane punktu z poszczególnych zadań: ").append('\n');
-        pointsFromSpecificTask.forEach((key, value) -> examResults.append(key).append(": ").append(value).append(" pkt").append('\n'));
-
-        return examResults.toString();
-    }
-
-
-    public void runMvnTest() throws IOException {
-        Process p = Runtime.getRuntime().exec("cmd /c mvn test");
-        String s;
-        System.out.println(p.getOutputStream().toString());
-        BufferedReader stdInput = new BufferedReader(new
-                InputStreamReader(p.getInputStream()));
-        StringBuilder sb = new StringBuilder();
-        while ((s = stdInput.readLine()) != null) {
-            sb.append(s);
-        }
-        System.out.println(sb);
-    }
-
-    public void cleanFolder() {
-        // Set the folder path
-        String folderPath = "src/test/java";
-        // Create a File object for the folder
-        File folder = new File(folderPath);
-        // Check if the folder exists
-        if (folder.exists()) {
-            // Get the list of files in the folder
-            File[] files = folder.listFiles();
-            // Loop through the files and delete them
-            for (File file : files) {
-                file.delete();
-            }
-        }
-    }
 }
-
