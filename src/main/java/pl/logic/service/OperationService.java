@@ -34,6 +34,8 @@ public class OperationService {
 
     private final TestCheckService testCheckService;
 
+    private final ZipUnzipService zipUnzipService;
+
 
 
 
@@ -46,13 +48,13 @@ public class OperationService {
         //UTWORZENIE FOLDERU OPERACYJNEGO
         Files.createDirectories(operationFolder);
         //WYPAKOWANIE ZIPA OD STUDENTA DO FILDERU OPERACYJNEGO
-        unzip(attachment.toPath().toString(), operationFolder.toString());
+        zipUnzipService.unzip(attachment.toPath().toString(), operationFolder.toString());
         //POBRANIE ZIPA Z TESTAMI PRZYGOTOWANYMI POD DANY TEST
         S3Object s3object = amazonClient.getObject(awsProperties.getBucketNameOfTests(), "771018b7-b7ae-4382-b3c1-aaa7a2829eb0Tests.zip");
         //ZAPISANIE ZIPA Z TESTAMI DO FOLDERU OPERACYJNEGO
         Files.copy(s3object.getObjectContent(), Path.of(operationFolder + File.separator + "test.zip"));
         //WYPAKOWANIE ZIPA Z TESTAMI DO FOLDERU OPERACYJNEGO
-        unzip(operationFolder + File.separator + "test.zip", operationFolder.toString());
+        zipUnzipService.unzip(operationFolder + File.separator + "test.zip", operationFolder.toString());
         //WRZUCENIE ZADAN DO PROJEKTU TESTEXAMLISTENER
         FileUtils.copyDirectory(Path.of("771018b7-b7ae-4382-b3c1-aaa7a2829eb0Operation/Tests").toFile(), Path.of("src/test/java").toFile());
         //SKOPIOWANIE TESTOW DO PROJEKTU TESTEXAMLISTENER
@@ -107,38 +109,4 @@ public class OperationService {
     }
 
 
-
-    private void unzip(String zipFilePath, String destDirectory) throws IOException {
-        File destDir = new File(destDirectory);
-        if (!destDir.exists()) {
-            destDir.mkdir();
-        }
-        try (ZipInputStream zipIn = new ZipInputStream(new FileInputStream(zipFilePath))) {
-            ZipEntry entry = zipIn.getNextEntry();
-            // iterates over entries in the zip file
-            while (entry != null) {
-                String filePath = destDirectory + File.separator + entry.getName();
-                if (!entry.isDirectory()) {
-                    // if the entry is a file, extracts it
-                    extractFile(zipIn, filePath);
-                } else {
-                    // if the entry is a directory, make the directory
-                    File dir = new File(filePath);
-                    dir.mkdirs();
-                }
-                zipIn.closeEntry();
-                entry = zipIn.getNextEntry();
-            }
-        }
-    }
-
-    private void extractFile(ZipInputStream zipIn, String filePath) throws IOException {
-        try (BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(filePath))) {
-            byte[] bytesIn = new byte[BUFFER_SIZE];
-            int read = 0;
-            while ((read = zipIn.read(bytesIn)) != -1) {
-                bos.write(bytesIn, 0, read);
-            }
-        }
-    }
 }
