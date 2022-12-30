@@ -12,4 +12,5 @@ import org.springframework.context.annotation.Configuration;
 public class AwsProperties {
     private String bucketNameOfExams;
     private String bucketNameOfTests;
+    private String bucketNameOfInboxExams;
 }
