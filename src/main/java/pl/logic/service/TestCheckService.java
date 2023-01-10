@@ -5,6 +5,7 @@ package pl.logic.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @Service
@@ -18,7 +19,7 @@ public class TestCheckService {
 
         Map<String, Integer> totalPoints = checkPoints("Tests run");
         Map<String, Integer> failurePoints = checkPoints("Failures");
-        Map<String, Integer> pointsFromSpecificTask = totalPoints;
+        Map<String, Integer> pointsFromSpecificTask = new HashMap<>(totalPoints);
         failurePoints.forEach((key, value) -> pointsFromSpecificTask.put(key, pointsFromSpecificTask.get(key) - value));
 
         return examMessage(totalPoints, failurePoints, pointsFromSpecificTask);

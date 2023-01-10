@@ -1,26 +1,20 @@
 package pl.logic.service;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.S3Object;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Service;
 import pl.logic.configuration.properties.AwsProperties;
-import pl.logic.model.EmailJmsModel;
 
 import javax.mail.MessagingException;
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -34,44 +28,60 @@ public class OperationService {
     private final TestCheckService testCheckService;
     private final ZipUnzipService zipUnzipService;
 
-    public void getInboxEmailFromQueue(EmailJmsModel emailJmsModel) throws MessagingException, IOException {
-        checkReceivedExam(emailJmsModel);
-    }
 
-    private String checkReceivedExam(EmailJmsModel emailJmsModel) throws IOException, MessagingException {
-        checkTestsFromEmail(emailJmsModel);
+    public void checkReceivedExam() throws IOException, MessagingException {
+        checkTestsFromEmail();
         String examResult = testCheckService.examResult();
         emailSendService.sendSimpleMessage(examResult, "kontoall2011@gmail.com");
         cleanFolder("src/test/java");
         cleanFolder("src/main/java/pl/exam");
 
-        return examResult;
     }
 
-    private void checkTestsFromEmail(EmailJmsModel emailJmsModel) throws IOException {
-        S3Object inboxGmailStudentFile = amazonClient.getObject(awsProperties.getBucketNameOfInboxExams(), emailJmsModel.getAwsFileName());
-        S3Object testForExamFile = amazonClient.getObject(awsProperties.getBucketNameOfTests(), emailJmsModel.getAwsTestFileName());
-        //File attachment = new File("771018b7-b7ae-4382-b3c1-aaa7a2829eb0.zip");        ////
-        String emailStudenta = emailJmsModel.getEmail();                                       ////   <- SYMULACJA DOSTARCZENIA DANYCH
-        Path operationFolder = Path.of("Operation");
+    private void checkTestsFromEmail() throws IOException {
+        String uuidRandom = UUID.randomUUID().toString();
+
+//        ///POBIERANIE TESTU OD STUDENTA
+//        S3Object inboxGmailStudentFile = amazonClient.getObject(awsProperties.getBucketNameOfInboxExams(), emailJmsModel.getAwsFileName());
+
+        //POBRANIE TESTÓW DLA ROZWIĄZANYCH ZADAŃ OD STUDENTA
+//        S3Object testForExamFile = amazonClient.getObject(awsProperties.getBucketNameOfTests(), emailJmsModel.getAwsTestFileName());
+
+        //EMAIL STUDENTA
+//        String emailStudenta = emailJmsModel.getEmail();
+
+        //FOLDER OPERACYJNY DO ROZPAKOWANIA ZIPÓW
+        Path operationFolder = Path.of("Operation" + uuidRandom);
         //UTWORZENIE FOLDERU OPERACYJNEGO
         Files.createDirectories(operationFolder);
-        Files.copy(inboxGmailStudentFile.getObjectContent(), Path.of(operationFolder + File.separator + emailJmsModel.getAwsFileName()));
-        Files.copy(testForExamFile.getObjectContent(),Path.of(operationFolder + File.separator + emailJmsModel.getAwsTestFileName()));
-        inboxGmailStudentFile.close();
-        testForExamFile.close();
-        File attachment = new File (operationFolder + File.separator + emailJmsModel.getAwsFileName());
-        File fileTest = new File (operationFolder + File.separator + emailJmsModel.getAwsTestFileName());
+
+//        //WRZUCENIE ZIPA Z ZADANIAMI OD STUDENTA DO FOLDERU OPERACYJNEGO
+//        Files.copy(inboxGmailStudentFile.getObjectContent(), Path.of(operationFolder + File.separator + emailJmsModel.getAwsFileName()));
+//        //WRZUCENIE ZIPA Z TESTAMI DO ROZWIĄZANYCH ZADAŃ STUDENTA DO FOLDERU OPERACYJNEGO
+//        Files.copy(testForExamFile.getObjectContent(), Path.of(operationFolder + File.separator + emailJmsModel.getAwsTestFileName()));
+
+//        inboxGmailStudentFile.close();
+//        testForExamFile.close();
+        Files.copy(Path.of("771018b7-b7ae-4382-b3c1-aaa7a2829eb0.zip"), Path.of(operationFolder + File.separator + "771018b7-b7ae-4382-b3c1-aaa7a2829eb0.zip"));
+
+        Files.copy(Path.of("842d2eee-6175-4f68-bf6a-46f30d07291bTests.zip"), Path.of(operationFolder + File.separator + "842d2eee-6175-4f68-bf6a-46f30d07291bTests.zip"));
+
+
+        File attachment = new File(operationFolder + File.separator + "771018b7-b7ae-4382-b3c1-aaa7a2829eb0.zip");
+        File fileTest = new File(operationFolder + File.separator + "842d2eee-6175-4f68-bf6a-46f30d07291bTests.zip");
 
         //WYPAKOWANIE ZIPA OD STUDENTA DO FILDERU OPERACYJNEGO
         zipUnzipService.unzip(attachment.toPath().toString(), operationFolder.toString());
         zipUnzipService.unzip(fileTest.toPath().toString(), operationFolder.toString());
 
-        //WRZUCENIE ZADAN DO PROJEKTU TESTEXAMLISTENER
-        FileUtils.copyDirectory(Path.of("Operation" + File.separator + emailJmsModel.getAwsFileName()).toFile(), Path.of("src/test/java").toFile());
-        //SKOPIOWANIE TESTOW DO PROJEKTU TESTEXAMLISTENER
-        FileUtils.copyDirectory(Path.of("771018b7-b7ae-4382-b3c1-aaa7a2829eb0Operation/Exam/src/main/java/pl/kurs").toFile(), Path.of("src/main/java/pl/kurs").toFile());
-        testForExamFile.close();
+//        WRZUCENIE ZADAN DO PROJEKTU TESTEXAMLISTENER
+//        FileUtils.copyDirectory(Path.of(operationFolder + File.separator + emailJmsModel.getAwsFileName()).toFile(), Path.of("src/test/java").toFile());
+//        //SKOPIOWANIE TESTOW DO PROJEKTU TESTEXAMLISTENER
+//        FileUtils.copyDirectory(Path.of("771018b7-b7ae-4382-b3c1-aaa7a2829eb0Operation/Exam/src/main/java/pl/kurs").toFile(), Path.of("src/main/java/pl/kurs").toFile());
+//        testForExamFile.close();
+
+        FileUtils.copyDirectory(Path.of(operationFolder + File.separator + "Tests").toFile(), Path.of("src/test/java").toFile());
+        FileUtils.copyDirectory(Path.of(operationFolder + File.separator + "Exam/src/main/java/pl/kurs").toFile(), Path.of("src/main/java/pl/exam").toFile());
 
         runMvnTest();
     }

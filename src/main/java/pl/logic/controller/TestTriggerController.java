@@ -21,10 +21,11 @@ public class TestTriggerController {
 
     private final OperationService operationService;
 
-//    @GetMapping
-//    public ResponseEntity examCheck() throws IOException, MessagingException {
-//        return ResponseEntity.status(HttpStatus.CREATED).body();//new MessageResponse(operationService.checkReceivedExam()));
-//    }
+    @GetMapping
+    public ResponseEntity examCheck() throws IOException, MessagingException {
+        operationService.checkReceivedExam();
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
 
 
 }
