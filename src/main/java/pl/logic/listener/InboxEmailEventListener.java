@@ -21,6 +21,6 @@ public class InboxEmailEventListener {
     public void subscribeInboxEmailEvent(String emailEvent){
         EmailJmsModel emailJmsModel = objectMapper.readValue(emailEvent, EmailJmsModel.class);
         log.info("Consuming event {}", emailEvent);
-//        operationService.checkReceivedExam(emailJmsModel);
+        operationService.checkReceivedExam(emailJmsModel);
     }
 }

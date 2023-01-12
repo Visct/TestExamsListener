@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration;
 @Getter
 @Setter
 public class AwsProperties {
-    private String bucketNameOfExams;
-    private String bucketNameOfTests;
-    private String bucketNameOfInboxExams;
+    private String bucketNameOfExams2;
+    private String bucketNameOfTests2;
+    private String bucketNameOfInboxExam2;
 }
